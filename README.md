@@ -12,27 +12,68 @@ Home Assistant Diorama is a web application that acts as an advanced client for 
 ## Running the Application
 
 ### Configuration
-Before running the application, you need to configure your environment variables. Create a `.env` file in the root directory of the project and provide your Home Assistant address and long-lived access token:
+Before running the application, you need to configure your environment variables. Create a `.env` file in the root directory of the project (or copy the example file) and provide your Home Assistant address and long-lived access token:
+
+```bash
+cp .env.example .env
+```
 
 ```env
 VITE_HA_HTTP_URL=http://homeassistant.local:8123
 VITE_HA_TOKEN=your_long_lived_access_token_here
 ```
 
-### Starting the Server
-To run the application locally, you first need to make sure you have [Bun](https://bun.sh/) installed via your system's package manager. Then, you simply need to execute the start script. It will automatically install dependencies, initialize the database (if necessary), and start both the backend and frontend servers:
+You can generate a Long-Lived Access Token in Home Assistant under **Profile → Long-Lived Access Tokens → Create Token**.
+
+### Development Mode
+To run the application locally for development, you first need to make sure you have [Bun](https://bun.sh/) installed via your system's package manager. Then, execute the start script. It will automatically install dependencies, initialize the database (if necessary), and start both the backend and frontend dev servers:
 
 ```bash
 ./start.sh
 ```
 
-The application will be accessible at `http://localhost:5173` (or another port specified by Vite).
+This starts two processes:
+- **Vite dev server** on port `5173` — serves the React frontend with hot reload
+- **Elysia backend** on port `3000` — handles the API and database
+
+The application will be accessible at `http://localhost:5173`.
+
+### Docker Deployment (Production)
+To deploy the application in production (e.g. on a NAS or home server), use Docker. This bundles both the frontend and backend into a single container served on port `3000`.
+
+#### Quick Start
+```bash
+./deploy.sh
+```
+
+The script will:
+1. Ask for your Home Assistant address and access token (first run only, saved to `.env`)
+2. Build the Docker image
+3. Start the container
+
+The application will be accessible at `http://<host-ip>:3000`.
+
+#### Manual Docker Commands
+```bash
+docker compose up -d --build    # Build and start
+docker compose logs             # View logs
+docker compose down             # Stop the container
+```
+
+#### Persistent Data
+The following data is stored outside the container (in `./data/`) and persists across restarts and rebuilds:
+- `ha_dashboard.sqlite` — the application database
+- `uploads/` — uploaded room images
+
+> [!NOTE]
+> The `VITE_HA_*` environment variables are embedded into the frontend at build time. If you change the Home Assistant address or token, you need to rebuild the image with `./deploy.sh` or `docker compose up -d --build`.
 
 ## Home Assistant Integration
 The project acts as an advanced client communicating directly with your Home Assistant instance using a WebSocket connection and a Long-Lived Access Token. No external cloud servers mediate this connection.
 
 ### Adding as a Custom Web Panel
-It is highly recommended to add this application directly to your Home Assistant dashboard. To do this go to settings -> panels -> add panel and select "Webpage" as the type. Then paste the URL of the application in the URL field.
+It is highly recommended to add this application directly to your Home Assistant dashboard. To do this go to Settings → Dashboards → Add Dashboard and select "Webpage" as the type. Then paste the URL of the application in the URL field.
+
 ## Supported Entities
 The system is built on a flexible pattern that matches the card's appearance and behavior to the device type.
 
@@ -56,24 +97,29 @@ Because of this architectural decision, it will be fully possible in the future 
 ## Directory Structure
 ```text
 src/
-├── components/         # UI Components
-│   ├── DnD/            # Drag & Drop Logic (Maps, Pins)
-│   ├── PopUps/         # Entity cards system and overlays
-│   └── ...
-├── hooks/              # Custom Hooks
-│   ├── WebSocket/      # Connection logic (useAuth, useWebSocket)
-│   └── Entities/       # Domain logic (useLights, useSwitches)
-├── providers/          # React Context Providers (HomeAssistantProvider)
-├── types/              # TypeScript type definitions
+├── features/           # Feature modules (rooms, lights, entities, etc.)
+├── shared/
+│   ├── components/     # Shared UI components (NavBar, ImageUploader, etc.)
+│   ├── hooks/          # Shared hooks (useWebSocket, useAuth, useHomeData)
+│   └── providers/      # React Context Providers (HomeAssistantProvider)
 ├── App.tsx             # Main layout and routing
 └── main.tsx            # Entry point
+
+server/
+├── routes/             # API route handlers (rooms, pins, lights, etc.)
+├── db/                 # Database query functions
+├── db.ts               # Database connection
+├── init-db.ts          # Schema initialization
+└── index.ts            # Elysia server entry point
 ```
 
 ## Tech Stack
-*   **Frontend Core:** [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
-*   **Backend Runtime:** [Bun](https://bun.sh/)
+*   **Frontend:** [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/)
+*   **Backend:** [Elysia](https://elysiajs.com/) (Bun-native HTTP framework)
+*   **Runtime:** [Bun](https://bun.sh/)
 *   **Build Tool:** [Vite](https://vitejs.dev/)
-*   **Communication:** WebSocket - full bidirectional real-time communication.
-*   **Styling:** Bootstrap 5 and **advanced CSS** for state visualizations (e.g., light glow, switch position).
+*   **Database:** SQLite (via Bun's built-in `bun:sqlite`)
+*   **Communication:** WebSocket — full bidirectional real-time communication
+*   **Styling:** Bootstrap 5 and advanced CSS for state visualizations (e.g., light glow, switch position)
 
 ---
