@@ -1,0 +1,14 @@
+services:
+  ha-diorama:
+    build:
+      context: .
+      args:
+        VITE_HA_HTTP_URL: ${VITE_HA_HTTP_URL}
+        VITE_HA_TOKEN: ${VITE_HA_TOKEN}
+    container_name: ha-diorama
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/ha_dashboard.sqlite:/app/ha_dashboard.sqlite
+      - ./data/uploads:/app/server/uploads
