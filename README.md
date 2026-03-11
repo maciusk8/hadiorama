@@ -52,10 +52,10 @@ docker run -d \
   -v ./data/ha_dashboard.sqlite:/app/ha_dashboard.sqlite \
   -v ./data/uploads:/app/server/uploads \
   --restart unless-stopped \
-  ghcr.io/maciuskejt/hadiorama:latest
+  ghcr.io/maciusk8/hadiorama:latest
 ```
 
-The application will be accessible at `http://localhost:3000` (or your server's IP). You can also explicitly pull the image first with `docker pull ghcr.io/maciuskejt/hadiorama:latest`.
+The application will be accessible at `http://localhost:3000` (or your server's IP). You can also explicitly pull the image first with `docker pull ghcr.io/maciusk8/hadiorama:latest`.
 
 #### Docker Compose
 If you prefer `docker-compose`, the repository includes a `docker-compose.yml`:
