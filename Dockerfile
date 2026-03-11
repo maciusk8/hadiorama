@@ -29,10 +29,12 @@ COPY --from=builder /app/dist ./dist
 # Copy server code
 COPY server ./server
 
-# Create uploads directory  
-RUN mkdir -p server/uploads
+# Create data directory for persistence
+RUN mkdir -p data
+# Create uploads directory inside data
+RUN mkdir -p data/uploads
 
-# Initialize the database
+# Initialize the database (this will create it in data/ if it doesn't exist)
 RUN bun run server/init-db.ts
 
 EXPOSE 3000

@@ -2,7 +2,7 @@ import { Elysia } from 'elysia';
 import { mkdir, exists } from 'node:fs/promises';
 import path from 'node:path';
 
-const UPLOADS_DIR = path.resolve(import.meta.dir, '../uploads');
+const UPLOADS_DIR = path.resolve(import.meta.dir, '../../data/uploads');
 
 // Ensure uploads directory exists
 await mkdir(UPLOADS_DIR, { recursive: true });

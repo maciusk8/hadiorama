@@ -49,8 +49,7 @@ docker run -d \
   --name ha-diorama \
   -p 3000:3000 \
   -e HA_URL=http://your-ha-ip:8123 \
-  -v ./data/ha_dashboard.sqlite:/app/ha_dashboard.sqlite \
-  -v ./data/uploads:/app/server/uploads \
+  -v ./data:/app/data \
   --restart unless-stopped \
   ghcr.io/maciusk8/hadiorama:latest
 ```
