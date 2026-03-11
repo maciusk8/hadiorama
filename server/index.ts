@@ -73,6 +73,9 @@ const app = new Elysia()
     set.status = 404;
     return 'Not found';
   })
-  .listen(3000);
+  .listen({
+    port: 3000,
+    hostname: '0.0.0.0'
+  });
 
 console.log(`Elysia backend server running on port ${app.server?.port}`);
