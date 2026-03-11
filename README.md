@@ -12,18 +12,18 @@ Home Assistant Diorama is a web application that acts as an advanced client for 
 ## Running the Application
 
 ### Configuration
-Before running the application for development, you need to configure your environment variables. Create a `.env` file in the root directory of the project (or copy the example file) and provide your Home Assistant address:
+Before running the application, you need to configure your environment variables. Create a `.env` file in the root directory of the project (or copy the example file) and provide your Home Assistant address and long-lived access token:
 
 ```bash
 cp .env.example .env
 ```
 
 ```env
-HA_URL=http://homeassistant.local:8123
+VITE_HA_HTTP_URL=http://homeassistant.local:8123
+VITE_HA_TOKEN=your_long_lived_access_token_here
 ```
 
-> [!NOTE]
-> Home Assistant Diorama uses OAuth2 to authenticate. You will be redirected to Home Assistant to log in and authorize the application on your first visit. No long-lived access tokens need to be configured!
+You can generate a Long-Lived Access Token in Home Assistant under **Profile → Long-Lived Access Tokens → Create Token**.
 
 ### Development Mode
 To run the application locally for development, you first need to make sure you have [Bun](https://bun.sh/) installed via your system's package manager. Then, execute the start script. It will automatically install dependencies, initialize the database (if necessary), and start both the backend and frontend dev servers:
@@ -39,30 +39,25 @@ This starts two processes:
 The application will be accessible at `http://localhost:5173`.
 
 ### Docker Deployment (Production)
-To deploy the application in production (e.g. on a NAS or home server), simply run the container using Docker. The application is entirely self-contained, but it requires the address of your Home Assistant instance.
+To deploy the application in production (e.g. on a NAS or home server), use Docker. This bundles both the frontend and backend into a single container served on port `3000`.
 
 #### Quick Start
-You can run the pre-built image directly from GitHub Container Registry:
-
 ```bash
-docker run -d \
-  --name ha-diorama \
-  -p 3000:3000 \
-  -e HA_URL=http://your-ha-ip:8123 \
-  -v ./data/ha_dashboard.sqlite:/app/ha_dashboard.sqlite \
-  -v ./data/uploads:/app/server/uploads \
-  --restart unless-stopped \
-  ghcr.io/maciuskejt/hadiorama:latest
+./deploy.sh
 ```
 
-The application will be accessible at `http://localhost:3000` (or your server's IP). You can also explicitly pull the image first with `docker pull ghcr.io/maciuskejt/hadiorama:latest`.
+The script will:
+1. Ask for your Home Assistant address and access token (first run only, saved to `.env`)
+2. Build the Docker image
+3. Start the container
 
-#### Docker Compose
-If you prefer `docker-compose`, the repository includes a `docker-compose.yml`:
+The application will be accessible at `http://<host-ip>:3000`.
 
+#### Manual Docker Commands
 ```bash
-# Provide your HA URL inline, or define it in a .env file
-HA_URL=http://your-ha-ip:8123 docker compose up -d --build
+docker compose up -d --build    # Build and start
+docker compose logs             # View logs
+docker compose down             # Stop the container
 ```
 
 #### Persistent Data
@@ -71,7 +66,13 @@ The following data is stored outside the container (in `./data/`) and persists a
 - `uploads/` — uploaded room images
 
 > [!NOTE]
-> The application uses OAuth2 to authenticate with your Home Assistant instance. When you open the application for the first time, you will be redirected to Home Assistant to log in and authorize HA Diorama. No long-lived access tokens need to be configured!
+> The `VITE_HA_*` environment variables are embedded into the frontend at build time. If you change the Home Assistant address or token, you need to rebuild the image with `./deploy.sh` or `docker compose up -d --build`.
+
+> [!IMPORTANT]
+> **Why can't I just `docker pull` and run?**
+> The application started as a simple React client that connects directly to Home Assistant from the browser via WebSocket. Because of this, the HA address and access token must be baked into the frontend JavaScript at build time — meaning you currently need to **build the image yourself** with your own credentials.
+>
+> A **server-side proxy** is planned, which will move the Home Assistant connection to the backend. Once implemented, the Docker image will accept `HA_HTTP_URL` and `HA_TOKEN` as runtime environment variables (`docker run -e`), making it possible to distribute a single pre-built image via `docker pull`.
 
 ## Home Assistant Integration
 The project acts as an advanced client communicating directly with your Home Assistant instance using a WebSocket connection and a Long-Lived Access Token. No external cloud servers mediate this connection.
