@@ -41,13 +41,8 @@ export const AUTH_CONFIG = {
     return `${this.haUrl}/auth/token`;
   },
 
-  /** client_id = public URL of this application */
-  get clientId(): string {
-    return stripTrailingSlash(requireEnv('CLIENT_ID'));
-  },
-
-  /** redirect_uri for OAuth callback — must share host/port with clientId */
-  get redirectUri(): string {
-    return `${this.clientId}/auth/callback`;
+  /** Helper to construct the redirect_uri from a dynamically determined client_id */
+  getRedirectUri(clientId: string): string {
+    return `${stripTrailingSlash(clientId)}/auth/callback`;
   },
 } as const;

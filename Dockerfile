@@ -2,10 +2,7 @@
 FROM oven/bun:1 AS builder
 
 WORKDIR /app
-
-# Vite bakes VITE_* env vars at build time, so we pass them as build args
-ARG VITE_HA_HTTP_URL
-ARG VITE_HA_TOKEN
+WORKDIR /app
 
 # Copy dependency files first for better caching
 COPY package.json bun.lock ./
@@ -14,9 +11,7 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build the Vite frontend (VITE_* args are picked up automatically)
-ENV VITE_HA_HTTP_URL=$VITE_HA_HTTP_URL
-ENV VITE_HA_TOKEN=$VITE_HA_TOKEN
+# Build the Vite frontend
 RUN bun run build
 
 # --- Stage 2: Production image ---

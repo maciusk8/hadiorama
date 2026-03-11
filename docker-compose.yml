@@ -1,14 +1,12 @@
 services:
   ha-diorama:
-    build:
-      context: .
-      args:
-        VITE_HA_HTTP_URL: ${VITE_HA_HTTP_URL}
-        VITE_HA_TOKEN: ${VITE_HA_TOKEN}
+    image: ghcr.io/maciuskejt/hadiorama:latest
     container_name: ha-diorama
     restart: unless-stopped
     ports:
       - "3000:3000"
+    environment:
+      - HA_URL=${HA_URL:-http://192.168.1.XX:8123}
     volumes:
       - ./data/ha_dashboard.sqlite:/app/ha_dashboard.sqlite
       - ./data/uploads:/app/server/uploads

@@ -13,10 +13,8 @@ if [ ! -f "$ENV_FILE" ]; then
     echo ""
 
     read -p "Enter your Home Assistant address (e.g. http://192.168.1.100:8123): " HA_URL
-    read -p "Enter your Long-Lived Access Token: " HA_TOKEN
 
-    echo "VITE_HA_HTTP_URL=$HA_URL" > "$ENV_FILE"
-    echo "VITE_HA_TOKEN=$HA_TOKEN" >> "$ENV_FILE"
+    echo "HA_URL=$HA_URL" > "$ENV_FILE"
 
     echo ""
     echo "Configuration saved to .env"

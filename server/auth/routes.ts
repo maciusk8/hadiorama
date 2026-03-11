@@ -21,10 +21,16 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
    * Initiates the OAuth flow by redirecting the user to HA's authorize page.
    * HA will prompt for login and consent, then redirect back to /auth/callback.
    */
-  .get('/login', ({ redirect }) => {
+  .get('/login', ({ request, redirect }) => {
+    // Construct dynamic clientId from the request
+    const url = new URL(request.url);
+    const host = request.headers.get('x-forwarded-host') || url.host;
+    const proto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '');
+    const clientId = `${proto}://${host}`;
+
     const params = new URLSearchParams({
-      client_id: AUTH_CONFIG.clientId,
-      redirect_uri: AUTH_CONFIG.redirectUri,
+      client_id: clientId,
+      redirect_uri: AUTH_CONFIG.getRedirectUri(clientId),
     });
 
     return redirect(`${AUTH_CONFIG.authorizeUrl}?${params.toString()}`);
@@ -34,7 +40,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
    * OAuth callback — HA redirects here with ?code=... after user authorizes.
    * Exchanges the code for access + refresh tokens and redirects to the app.
    */
-  .get('/callback', async ({ query, redirect, set, cookie: { auth_session } }) => {
+  .get('/callback', async ({ request, query, redirect, set, cookie: { auth_session } }) => {
     const { code } = query;
 
     if (!code) {
@@ -43,7 +49,12 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
 
     try {
-      await exchangeCodeForTokens(code as string);
+      const url = new URL(request.url);
+      const host = request.headers.get('x-forwarded-host') || url.host;
+      const proto = request.headers.get('x-forwarded-proto') || url.protocol.replace(':', '');
+      const clientId = `${proto}://${host}`;
+
+      await exchangeCodeForTokens(code as string, clientId);
       
       const sessionId = getSessionId();
       if (sessionId) {
