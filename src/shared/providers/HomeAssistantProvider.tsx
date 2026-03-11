@@ -5,7 +5,7 @@ import type { EntityState, HomeAssistantContextType, HomeAssistantProviderProps 
 export const HAContext = React.createContext<HomeAssistantContextType | null>(null);
 
 
-export const HomeAssistantProvider: React.FC<HomeAssistantProviderProps> = ({ haToken, url, children }) => {
+export const HomeAssistantProvider: React.FC<HomeAssistantProviderProps> = ({ url, children }) => {
     const [entities, setEntities] = useState<EntityState[]>([]);
     const subscribedRef = useRef(false);
     const messageId = useRef(1);
@@ -29,7 +29,7 @@ export const HomeAssistantProvider: React.FC<HomeAssistantProviderProps> = ({ ha
         }
     }, []);
 
-    const { status, lastMessage, sendMessage, error, reconnect } = useAuth(haToken, url, { onMessage: handleMessage });
+    const { status, lastMessage, sendMessage, error, reconnect } = useAuth(url, { onMessage: handleMessage });
 
     const sendCommand = useCallback((message: object) => {
         sendMessage({
