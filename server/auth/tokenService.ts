@@ -38,11 +38,11 @@ interface TokenError {
  * Exchange an authorization code for access + refresh tokens.
  * Called once after the user completes the OAuth authorize step.
  */
-export async function exchangeCodeForTokens(code: string, clientId: string): Promise<void> {
+export async function exchangeCodeForTokens(code: string): Promise<void> {
   const body = new URLSearchParams({
     grant_type: 'authorization_code',
     code,
-    client_id: clientId,
+    client_id: AUTH_CONFIG.clientId,
   });
 
   const response = await fetch(AUTH_CONFIG.tokenUrl, {
@@ -57,7 +57,7 @@ export async function exchangeCodeForTokens(code: string, clientId: string): Pro
   }
 
   const tokens = (await response.json()) as TokenResponse;
-  setSession({ ...tokens, client_id: clientId });
+  setSession(tokens);
 
   console.log('[Auth] Successfully exchanged code for tokens');
 }
@@ -75,7 +75,7 @@ export async function refreshAccessToken(): Promise<void> {
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     refresh_token: session.refreshToken,
-    client_id: session.clientId,
+    client_id: AUTH_CONFIG.clientId,
   });
 
   const response = await fetch(AUTH_CONFIG.tokenUrl, {

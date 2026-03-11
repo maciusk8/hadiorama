@@ -12,8 +12,6 @@ export interface OAuthTokens {
   expiresAt: number;
   /** Unique ID for the browser cookie to map to this session */
   sessionId: string;
-  /** Dynamic client ID used to negotiate this session token */
-  clientId: string;
 }
 
 /** Buffer before actual expiry to trigger proactive refresh (5 minutes) */
@@ -33,14 +31,12 @@ export function setSession(tokens: {
   access_token: string;
   refresh_token: string;
   expires_in: number;
-  client_id: string;
 }): void {
   currentSession = {
     accessToken: tokens.access_token,
     refreshToken: tokens.refresh_token,
     expiresAt: Date.now() + tokens.expires_in * 1000,
     sessionId: crypto.randomUUID(),
-    clientId: tokens.client_id,
   };
 }
 
