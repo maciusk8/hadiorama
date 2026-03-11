@@ -19,6 +19,7 @@ export function useWebSocket(url: string, options: { onMessage: (message: Record
     const retryCount = useRef<number>(0);
     const retryTimeoutId = useRef<number | null>(null);
     const shouldReconnect = useRef<boolean>(true);
+    const messageQueue = useRef<object[]>([]);
 
     const connect = useCallback(() => {
         // Cleanup previous connection if exists
@@ -33,6 +34,16 @@ export function useWebSocket(url: string, options: { onMessage: (message: Record
         ws.current.onopen = () => {
             setConnectionStatus('connected');
             retryCount.current = 0; // Reset retry counter on successful connection
+            
+            // Flush any queued messages
+            if (messageQueue.current.length > 0) {
+                messageQueue.current.forEach(msg => {
+                    if (ws.current?.readyState === WebSocket.OPEN) {
+                        ws.current.send(JSON.stringify(msg));
+                    }
+                });
+                messageQueue.current = [];
+            }
         };
 
         ws.current.onmessage = (event) => {
@@ -59,7 +70,6 @@ export function useWebSocket(url: string, options: { onMessage: (message: Record
             // Only reconnect if we should and haven't exceeded max attempts
             if (shouldReconnect.current && retryCount.current < MAX_RETRY_ATTEMPTS) {
                 const delay = BASE_RETRY_DELAY_MS * Math.pow(2, retryCount.current); // Exponential backoff
-                console.log(`Reconnecting in ${delay}ms (attempt ${retryCount.current + 1}/${MAX_RETRY_ATTEMPTS})`);
 
                 retryTimeoutId.current = window.setTimeout(() => {
                     retryCount.current++;
@@ -89,10 +99,11 @@ export function useWebSocket(url: string, options: { onMessage: (message: Record
     const sendMessage = useCallback((message: object) => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
             ws.current.send(JSON.stringify(message));
+        } else if (ws.current && ws.current.readyState === WebSocket.CONNECTING) {
+            messageQueue.current.push(message);
         } else {
-            const errorMessage: string = "WebSocket is not connected. Unable to send message.";
-            setError(errorMessage);
-            console.warn(errorMessage);
+            // Let's also queue if it's disconnected, just in case reconnect happens immediately
+            messageQueue.current.push(message);
         }
     }, []);
 

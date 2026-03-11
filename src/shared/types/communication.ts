@@ -21,7 +21,6 @@ export interface EntityState {
 }
 
 export interface HomeAssistantProviderProps {
-    haToken: string;
     url: string;
     children: React.ReactNode;
 }

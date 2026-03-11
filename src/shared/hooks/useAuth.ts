@@ -2,13 +2,23 @@ import { useWebSocket } from '@/shared/hooks/useWebSocket';
 import { useState, useEffect } from 'react';
 import type { HAConnectionStatus } from '@/shared/types/protocol';
 
-export function useAuth(haToken: string, url: string, options: { onMessage: (message: Record<string, any>) => void }) {
+/**
+ * Handles the WebSocket connection lifecycle with the proxy.
+ *
+ * Since the Elysia proxy handles HA authentication server-side,
+ * this hook no longer sends auth messages. It waits for the proxy
+ * to forward `auth_ok` from HA, indicating the connection is ready.
+ */
+export function useAuth(url: string, options: { onMessage: (message: Record<string, any>) => void }) {
     const { connectionStatus, lastMessage, error, sendMessage, reconnect } = useWebSocket(url, options);
     const [status, setStatus] = useState<HAConnectionStatus>('disconnected');
 
     useEffect(() => {
         if (connectionStatus === 'connecting') {
             setStatus('connecting');
+        } else if (connectionStatus === 'connected') {
+            // Proxy is handling auth with HA — we're waiting for auth_ok
+            setStatus('authenticating');
         } else if (connectionStatus === 'disconnected') {
             setStatus('disconnected');
         }
@@ -17,26 +27,13 @@ export function useAuth(haToken: string, url: string, options: { onMessage: (mes
     useEffect(() => {
         if (!lastMessage) return;
 
-        switch (lastMessage.type) {
-            case 'auth_required':
-                setStatus('authenticating');
-                sendMessage({
-                    type: 'auth',
-                    access_token: haToken
-                });
-                break;
-
-            case 'auth_ok':
-                setStatus('authenticated');
-                console.log('Successfully authenticated with Home Assistant');
-                break;
-
-            case 'auth_invalid':
-                setStatus('auth_failed');
-                console.error('Authentication failed:', lastMessage.message);
-                break;
+        if (lastMessage.type === 'auth_ok') {
+            setStatus('authenticated');
+        } else if (lastMessage.type === 'auth_failed') {
+            setStatus('auth_failed');
+            console.error('Proxy authentication failed:', lastMessage.message);
         }
-    }, [lastMessage, haToken, sendMessage]);
+    }, [lastMessage]);
 
     return {
         status,
