@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import useRoomMutations from '../hooks/useRoomMutations';
+import useHomeData from '../hooks/useHomeData';
 import PopupOverlay from './PopupOverlay';
 import './AiImageGenerator.css';
 
@@ -14,7 +15,8 @@ interface AiImageGeneratorProps {
 }
 
 export default function AiImageGenerator({ onClose }: AiImageGeneratorProps) {
-    const { addRoomMutation } = useRoomMutations();
+    const { addRoomMutation, updateRoomMutation } = useRoomMutations();
+    const { rooms } = useHomeData();
     const [file, setFile] = useState<File | null>(null);
     const [prompt, setPrompt] = useState('A pixel art cute minimalistic view from above of the room like in a video game, camera positioned up and to the side above the ceiling, birds view, every lamp visible, *miniature abstract room layout visible from up above*');
     const [loading, setLoading] = useState(false);
@@ -117,6 +119,35 @@ export default function AiImageGenerator({ onClose }: AiImageGeneratorProps) {
         }
     };
 
+    const handleSetNightImage = (imageUrl: string) => {
+        if (!rooms || rooms.length === 0) {
+            alert("No rooms available.");
+            return;
+        }
+
+        const roomNames = rooms.map(r => r.name).join(', ');
+        
+        // Find if we are currently looking at a specific room in the URL
+        const currentSlug = decodeURIComponent(window.location.pathname.substring(1));
+        
+        // Quick loose matching without importing roomSlugs fully just for suggestions
+        const activeRoom = rooms.find(r => r.name === currentSlug || currentSlug.startsWith(r.name));
+
+        const roomName = window.prompt(`Enter room name to update:\n(${roomNames})`, activeRoom?.name || '');
+        if (roomName) {
+            const targetRoom = rooms.find(r => r.name.toLowerCase() === roomName.toLowerCase());
+            if (targetRoom) {
+                updateRoomMutation.mutate({
+                    ...targetRoom,
+                    nightImage: imageUrl
+                });
+                alert(`Night image updated for ${targetRoom.name}!`);
+            } else {
+                alert("Room not found!");
+            }
+        }
+    };
+
     return (
         <PopupOverlay onClose={onClose}>
             <div className="ai-image-generator" onClick={e => e.stopPropagation()}>
@@ -135,6 +166,7 @@ export default function AiImageGenerator({ onClose }: AiImageGeneratorProps) {
                                 <p className="ai-history-prompt">"{step.prompt}"</p>
                                 <div className="ai-action-buttons">
                                     <button type="button" className="ai-action-btn" onClick={() => handleCreateRoom(step.url)}>Set as New Room</button>
+                                    <button type="button" className="ai-action-btn" onClick={() => handleSetNightImage(step.url)}>Set as Nighttime Image</button>
                                     {index === history.length - 1 && (
                                         <button type="button" className="ai-action-btn" onClick={handleGenerateNighttime}>Generate Nighttime Version</button>
                                     )}
