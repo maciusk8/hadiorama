@@ -12,6 +12,7 @@ import { lightsRoutes } from './routes/lights';
 import { areasRoutes } from './routes/areas';
 import { pinTypesRoutes } from './routes/pinTypes';
 import { uploadsRoutes } from './routes/uploads';
+import { aiRoutes } from './routes/ai';
 
 const DIST_DIR = path.resolve(import.meta.dir, '../dist');
 
@@ -42,6 +43,7 @@ const app = new Elysia()
     .use(lightsRoutes)
     .use(areasRoutes)
     .use(pinTypesRoutes)
+    .use(aiRoutes)
   )
 
   // Serve static frontend files in production
