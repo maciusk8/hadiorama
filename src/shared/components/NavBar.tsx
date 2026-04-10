@@ -5,8 +5,8 @@ import { generateSlugs } from '@/shared/utils/roomSlugs';
 import useRoomMutations from '@/shared/hooks/useRoomMutations';
 import './NavBar.css';
 
-export default function NavBar({ isEditing, setEditing }:
-    { isEditing: boolean; setEditing: React.Dispatch<React.SetStateAction<boolean>> }) {
+export default function NavBar({ isEditing, setEditing, onToggleAi }:
+    { isEditing: boolean; setEditing: React.Dispatch<React.SetStateAction<boolean>>; onToggleAi?: () => void }) {
 
     const { rooms } = useHomeData();
     const { addRoom, removeRoom, renameRoom } = useRoomMutations();
@@ -53,7 +53,8 @@ export default function NavBar({ isEditing, setEditing }:
                 </Nav.Item>
             ))}
 
-            <Nav.Item className="nav-item-right">
+            <Nav.Item className="nav-item-right d-flex align-items-center gap-2">
+                <Button className="ai-gen-btn" style={{ background: 'linear-gradient(45deg, #FF3366, #FF9933)', border: 'none', color: 'white' }} onClick={onToggleAi}>✨ AI Gen</Button>
                 <Button onClick={() => setEditing(true)}>edit</Button>
             </Nav.Item>
         </Nav>
